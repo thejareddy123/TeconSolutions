@@ -1,0 +1,232 @@
+
+{% extends "components/base.html" %}
+
+{% block title %}Knowledge Base - TraitSoftwares{% endblock %}
+{% block page_title %}AI Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">AI Knowledge Base</h2>
+            <p class="text-gray-500 text-sm">Upload company documents for the AI assistant to learn from.</p>
+        </div>
+        <button onclick="openModal('uploadModal')" class="btn btn-primary">
+            <i class="fas fa-upload"></i> Upload Document
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4">
+        <div class="card text-center">
+            <p class="text-2xl font-bold text-primary-600">{{ documents | length }}</p>
+            <p class="text-sm text-gray-500">Documents</p>
+        </div>
+        <div class="card text-center">
+            <p class="text-2xl font-bold text-green-600">{{ documents | selectattr('is_indexed') | list | length }}</p>
+            <p class="text-sm text-gray-500">Indexed</p>
+        </div>
+        <div class="card text-center">
+            <p class="text-2xl font-bold text-purple-600">{{ stats.total_chunks or 0 }}</p>
+            <p class="text-sm text-gray-500">Total Chunks</p>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="card bg-blue-50 border-blue-200">
+        <h3 class="font-semibold text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>How the AI Knowledge Base Works</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-blue-700">
+            <div class="text-center">
+                <i class="fas fa-upload text-2xl mb-1 block text-blue-500"></i>
+                <strong>1. Upload</strong><br>PDF, DOCX, or TXT
+            </div>
+            <div class="text-center">
+                <i class="fas fa-scissors text-2xl mb-1 block text-blue-500"></i>
+                <strong>2. Chunk</strong><br>Text split into pieces
+            </div>
+            <div class="text-center">
+                <i class="fas fa-brain text-2xl mb-1 block text-blue-500"></i>
+                <strong>3. Embed</strong><br>Convert to vectors
+            </div>
+            <div class="text-center">
+                <i class="fas fa-search text-2xl mb-1 block text-blue-500"></i>
+                <strong>4. Search</strong><br>AI finds relevant parts
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Table -->
+    <div class="card p-0 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Status</th>
+                        <th>Chunks</th>
+                        <th>Uploaded By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if documents %}
+                    {% for doc in documents %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-file-{{ 'pdf text-red-500' if doc.file_type == 'pdf' else ('word text-blue-500' if doc.file_type == 'docx' else 'alt text-gray-500') }}"></i>
+                                <span class="text-sm font-medium">{{ doc.file_name }}</span>
+                            </div>
+                            {% if doc.description %}
+                            <p class="text-xs text-gray-400 mt-0.5">{{ doc.description[:60] }}...</p>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge badge-submitted">{{ doc.category }}</span></td>
+                        <td class="uppercase text-xs font-mono font-bold text-gray-500">{{ doc.file_type }}</td>
+                        <td class="text-sm text-gray-500">{{ doc.file_size_kb }} KB</td>
+                        <td>
+                            {% if doc.is_indexed %}
+                            <span class="badge badge-approved"><i class="fas fa-check-circle mr-1"></i>Indexed</span>
+                            {% else %}
+                            <span class="badge badge-pending">Not Indexed</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-sm text-gray-600">{{ doc.chunk_count or 0 }}</td>
+                        <td class="text-sm text-gray-600">{{ doc.uploaded_by_name }}</td>
+                        <td>
+                            <div class="flex gap-1">
+                                <button onclick="reindexDoc({{ doc.id }})"
+                                        class="btn btn-secondary btn-sm" title="Re-index">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button onclick="deleteDoc({{ doc.id }}, '{{ doc.file_name }}')"
+                                        class="btn btn-danger btn-sm" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-12 text-gray-400">
+                            <i class="fas fa-book text-4xl block mb-3"></i>
+                            <p>No documents yet. Upload your first company document!</p>
+                            <p class="text-xs mt-1">Try uploading: Employee Handbook, Leave Policy, HR Guidelines</p>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-gray-800">
+                <i class="fas fa-upload text-primary-600 mr-2"></i>Upload Document
+            </h3>
+            <button onclick="closeModal('uploadModal')" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="form-label">Document File <span class="text-red-500">*</span></label>
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-400 transition cursor-pointer"
+                     onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
+                    <p class="text-sm text-gray-600">Click to browse or drag & drop</p>
+                    <p class="text-xs text-gray-400 mt-1">PDF, DOCX, TXT · Max 10MB</p>
+                    <p id="fileName" class="text-sm text-primary-600 font-medium mt-2"></p>
+                </div>
+                <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.txt" class="hidden"
+                       onchange="document.getElementById('fileName').textContent = this.files[0]?.name || ''">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-input">
+                    <option>General</option>
+                    <option>Leave Policy</option>
+                    <option>HR Policy</option>
+                    <option>Employee Handbook</option>
+                    <option>Timesheet Guidelines</option>
+                    <option>Holiday Policy</option>
+                    <option>Code of Conduct</option>
+                    <option>Benefits</option>
+                    <option>SOP Documents</option>
+                </select>
+            </div>
+
+            <div class="mb-5">
+                <label class="form-label">Description (Optional)</label>
+                <input type="text" name="description" class="form-input" placeholder="Brief description of this document">
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('uploadModal')" class="btn btn-secondary flex-1">Cancel</button>
+                <button type="button" onclick="uploadDocument()" id="uploadBtn" class="btn btn-primary flex-1">
+                    <i class="fas fa-upload"></i> Upload & Index
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function uploadDocument() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files[0]) { showToast('Please select a file', 'error'); return; }
+
+        const btn = document.getElementById('uploadBtn');
+        btn.innerHTML = '<span class="spinner"></span> Processing...';
+        btn.disabled = true;
+
+        const formData = new FormData(document.getElementById('uploadForm'));
+        
+        try {
+            const response = await fetch('/admin/knowledge-base/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeModal('uploadModal');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Upload failed', 'error');
+            }
+        } catch (e) {
+            showToast('Network error. Please try again.', 'error');
+        } finally {
+            btn.innerHTML = '<i class="fas fa-upload"></i> Upload & Index';
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteDoc(id, name) {
+        if (!confirm(`Delete "${name}" from knowledge base? This cannot be undone.`)) return;
+        const result = await postJson(`/admin/knowledge-base/${id}/delete`);
+        if (result.success) { showToast('Document deleted!', 'success'); setTimeout(() => location.reload(), 1200); }
+        else showToast(result.error || 'Failed to delete', 'error');
+    }
+
+    async function reindexDoc(id) {
+        const result = await postJson(`/admin/knowledge-base/${id}/reindex`);
+        if (result.success) { showToast(result.message, 'success'); setTimeout(() => location.reload(), 1500); }
+        else showToast(result.error || 'Failed to re-index', 'error');
+    }
+</script>
+{% endblock %}

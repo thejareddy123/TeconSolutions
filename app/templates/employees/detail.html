@@ -1,0 +1,113 @@
+{% extends "components/base.html" %}
+{% block title %}{{ employee.first_name }} {{ employee.last_name }} - TraitSoftwares{% endblock %}
+{% block page_title %}Employee Detail{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-5">
+
+  <a href="/employees" class="text-sm text-primary-600 hover:underline"><i class="fas fa-arrow-left mr-1"></i>Back to Employees</a>
+
+  <!-- Profile Card -->
+  <div class="card bg-gradient-to-r from-primary-800 to-primary-600 text-white">
+    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+      <div class="w-20 h-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-3xl font-bold border-4 border-white border-opacity-30 flex-shrink-0">
+        {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+      </div>
+      <div class="text-center sm:text-left flex-1">
+        <h2 class="text-2xl font-bold">{{ employee.first_name }} {{ employee.last_name }}</h2>
+        <p class="text-primary-200">{{ employee.designation or 'Employee' }} · {{ employee.department or '' }}</p>
+        <div class="flex flex-wrap justify-center sm:justify-start gap-4 mt-3 text-sm text-primary-200">
+          <span><i class="fas fa-id-badge mr-1"></i>{{ employee.employee_id }}</span>
+          <span><i class="fas fa-envelope mr-1"></i>{{ employee.email }}</span>
+          {% if employee.phone %}<span><i class="fas fa-phone mr-1"></i>{{ employee.phone }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 flex-shrink-0">
+        {% if employee.is_locked %}
+        <span class="badge badge-rejected">Locked</span>
+        {% elif employee.is_active %}
+        <span class="badge badge-approved">Active</span>
+        {% else %}
+        <span class="badge badge-cancelled">Inactive</span>
+        {% endif %}
+        <span class="badge badge-submitted capitalize text-center">{{ employee.role }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  {% if session.role == 'admin' %}
+  <div class="card">
+    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <i class="fas fa-edit text-primary-600"></i>Edit Employee
+    </h3>
+    <form id="editForm">
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="form-label">First Name</label>
+          <input type="text" name="first_name" class="form-input" value="{{ employee.first_name }}"></div>
+        <div><label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-input" value="{{ employee.last_name }}"></div>
+        <div><label class="form-label">Phone</label>
+          <input type="tel" name="phone" class="form-input" value="{{ employee.phone or '' }}"></div>
+        <div><label class="form-label">Department</label>
+          <input type="text" name="department" class="form-input" value="{{ employee.department or '' }}"></div>
+        <div><label class="form-label">Designation</label>
+          <input type="text" name="designation" class="form-input" value="{{ employee.designation or '' }}"></div>
+        <div><label class="form-label">Role</label>
+          <select name="role" class="form-input">
+            <option value="employee" {{ 'selected' if employee.role=='employee' }}>Employee</option>
+            <option value="manager" {{ 'selected' if employee.role=='manager' }}>Manager</option>
+            <option value="admin" {{ 'selected' if employee.role=='admin' }}>Admin</option>
+          </select>
+        </div>
+        <div><label class="form-label">Manager</label>
+          <select name="manager_id" class="form-input">
+            <option value="">None</option>
+            {% for m in managers %}
+            <option value="{{ m.id }}" {{ 'selected' if employee.manager_id == m.id }}>{{ m.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Date of Joining</label>
+          <input type="date" name="date_of_joining" class="form-input" value="{{ employee.date_of_joining or '' }}"></div>
+        <div><label class="form-label">Annual Leave Balance</label>
+          <input type="number" name="annual_leave" class="form-input" value="{{ employee.annual_leave_balance }}" step="0.5"></div>
+        <div><label class="form-label">Sick Leave Balance</label>
+          <input type="number" name="sick_leave" class="form-input" value="{{ employee.sick_leave_balance }}" step="0.5"></div>
+        <div><label class="form-label">Date of Birth</label>
+          <input type="date" name="date_of_birth" class="form-input" value="{{ employee.date_of_birth or '' }}"></div>
+        <div><label class="form-label">Address</label>
+          <input type="text" name="address" class="form-input" value="{{ employee.address or '' }}"></div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="updateEmployee()" class="btn btn-primary flex-1" id="updateBtn">
+          <i class="fas fa-save mr-1"></i>Save Changes
+        </button>
+        <button type="button" onclick="toggleStatus()" class="btn btn-warning">
+          <i class="fas fa-{{ 'ban' if employee.is_active else 'check-circle' }} mr-1"></i>
+          {{ 'Deactivate' if employee.is_active else 'Activate' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function updateEmployee() {
+  const btn = document.getElementById('updateBtn');
+  btn.innerHTML = '<span class="spinner"></span> Saving...'; btn.disabled = true;
+  const data = await postForm('/employees/{{ employee.id }}/update', document.getElementById('editForm'));
+  btn.innerHTML = '<i class="fas fa-save mr-1"></i>Save Changes'; btn.disabled = false;
+  if (data.success) showToast(data.message, 'success');
+  else showToast(data.error || 'Failed', 'error');
+}
+async function toggleStatus() {
+  if (!confirm('Toggle employee status?')) return;
+  const data = await postJson('/employees/{{ employee.id }}/toggle-status');
+  if (data.success) { showToast('Status updated!', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+</script>
+{% endblock %}

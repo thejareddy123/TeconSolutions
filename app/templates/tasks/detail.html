@@ -1,0 +1,94 @@
+{% extends "components/base.html" %}
+{% block title %}{{ task.title }} - TraitSoftwares{% endblock %}
+{% block page_title %}Task Detail{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5">
+  <a href="/tasks" class="text-sm text-primary-600 hover:underline"><i class="fas fa-arrow-left mr-1"></i>Back to Tasks</a>
+
+  <div class="card">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-gray-800">{{ task.title }}</h2>
+        {% if task.project_name %}
+        <p class="text-sm text-gray-500 mt-1"><i class="fas fa-folder mr-1"></i>{{ task.project_name }}</p>
+        {% endif %}
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <span class="badge badge-{{ task.priority }}">{{ task.priority }}</span>
+        <span class="badge badge-{{ task.status }}">{{ task.status | replace('_',' ') }}</span>
+      </div>
+    </div>
+
+    {% if task.description %}
+    <div class="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-700 leading-relaxed">
+      {{ task.description | replace('\n', '<br>') | safe }}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-2 gap-4 text-sm mb-5">
+      <div><span class="text-gray-500">Start Date:</span> <span class="font-medium">{{ task.start_date or '—' }}</span></div>
+      <div><span class="text-gray-500">Due Date:</span> <span class="font-medium {{ 'text-red-500' if task.due_date and task.due_date < today else '' }}">{{ task.due_date or '—' }}</span></div>
+      <div><span class="text-gray-500">Created By:</span> <span class="font-medium">{{ task.created_by_name }}</span></div>
+      <div><span class="text-gray-500">Created:</span> <span class="font-medium">{{ task.created_at | string | truncate(10, true, '') }}</span></div>
+    </div>
+
+    <!-- Assignees -->
+    <div class="mb-5">
+      <p class="text-sm font-medium text-gray-700 mb-2">Assigned To:</p>
+      {% if task.assignees %}
+      <div class="flex flex-wrap gap-2">
+        {% for a in task.assignees %}
+        <div class="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1">
+          <div class="w-6 h-6 rounded-full bg-primary-500 text-white text-xs flex items-center justify-center font-bold">
+            {{ a.name[:2].upper() }}
+          </div>
+          <span class="text-sm">{{ a.name }}</span>
+          {% if session.role in ['admin','manager'] %}
+          <button onclick="removeAssignee({{ task.id }}, {{ a.id }}, '{{ a.name }}')" class="text-gray-400 hover:text-red-500 ml-1">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-sm text-gray-400">No one assigned yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Status Update -->
+    <div class="border-t border-gray-100 pt-4">
+      <p class="text-sm font-medium text-gray-700 mb-2">Update Status:</p>
+      <div class="flex flex-wrap gap-2">
+        {% for s in ['todo', 'in_progress', 'review', 'completed', 'cancelled'] %}
+        <button onclick="updateStatus('{{ s }}')"
+                class="btn btn-sm {{ 'btn-primary' if task.status == s else 'btn-secondary' }}">
+          {{ s | replace('_',' ') | title }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const today = '{{ now() }}' || new Date().toISOString().split('T')[0];
+
+async function updateStatus(status) {
+  const formData = new FormData();
+  formData.append('status', status);
+  const resp = await fetch('/tasks/{{ task.id }}/update-status', { method: 'POST', body: formData });
+  const data = await resp.json();
+  if (data.success) { showToast('Status updated!', 'success'); setTimeout(() => location.reload(), 1000); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+async function removeAssignee(taskId, userId, name) {
+  if (!confirm(`Remove ${name} from this task?`)) return;
+  const data = await postJson(`/tasks/${taskId}/assign`, { user_id: userId });
+  if (data.success) { showToast('Removed!', 'success'); setTimeout(() => location.reload(), 1000); }
+}
+</script>
+{% endblock %}

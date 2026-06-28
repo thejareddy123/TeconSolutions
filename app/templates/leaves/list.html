@@ -1,0 +1,257 @@
+{% extends "components/base.html" %}
+{% block title %}Leaves - TraitSoftwares{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+{% block content %}
+<div class="space-y-5">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">Leave Requests</h2>
+      <p class="text-gray-500 text-sm">{{ leaves|length }} leave request(s)</p>
+    </div>
+    {% if session.role == 'employee' %}
+    <button onclick="openModal('applyLeaveModal')" class="btn btn-primary">
+      <i class="fas fa-plus mr-2"></i>Apply Leave
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Leave Balance Cards (for employees) -->
+  {% if session.role == 'employee' %}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="card text-center border-l-4 border-blue-500">
+      <p class="text-2xl font-bold text-blue-600">{{ balance.annual_leave_balance or 0 }}</p>
+      <p class="text-sm text-gray-500 mt-1">Annual Leave Days</p>
+    </div>
+    <div class="card text-center border-l-4 border-red-500">
+      <p class="text-2xl font-bold text-red-600">{{ balance.sick_leave_balance or 0 }}</p>
+      <p class="text-sm text-gray-500 mt-1">Sick Leave Days</p>
+    </div>
+    <div class="card text-center border-l-4 border-yellow-500">
+      <p class="text-2xl font-bold text-yellow-600">{{ leaves | selectattr('status', 'equalto', 'pending') | list | length }}</p>
+      <p class="text-sm text-gray-500 mt-1">Pending Requests</p>
+    </div>
+    <div class="card text-center border-l-4 border-green-500">
+      <p class="text-2xl font-bold text-green-600">{{ leaves | selectattr('status', 'equalto', 'approved') | list | length }}</p>
+      <p class="text-sm text-gray-500 mt-1">Approved This Year</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <div class="card">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="form-label">Status</label>
+        <select name="status" class="form-input">
+          <option value="">All Status</option>
+          <option value="pending" {{ 'selected' if filters.status=='pending' }}>Pending</option>
+          <option value="approved" {{ 'selected' if filters.status=='approved' }}>Approved</option>
+          <option value="rejected" {{ 'selected' if filters.status=='rejected' }}>Rejected</option>
+          <option value="cancelled" {{ 'selected' if filters.status=='cancelled' }}>Cancelled</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Leave Type</label>
+        <select name="leave_type" class="form-input">
+          <option value="">All Types</option>
+          <option value="annual">Annual</option>
+          <option value="sick">Sick</option>
+          <option value="maternity">Maternity</option>
+          <option value="paternity">Paternity</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/leaves" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Leaves Table -->
+  <div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% if session.role in ['admin', 'manager'] %}
+            <th>Employee</th>
+            {% endif %}
+            <th>Leave Type</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Days</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Applied On</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leave in leaves %}
+          <tr>
+            {% if session.role in ['admin', 'manager'] %}
+            <td>
+              <p class="font-medium text-gray-800 text-sm">{{ leave.employee_name }}</p>
+              <p class="text-xs text-gray-400">{{ leave.department or '' }}</p>
+            </td>
+            {% endif %}
+            <td><span class="badge badge-submitted">{{ leave.leave_type | capitalize }}</span></td>
+            <td class="text-sm">{{ leave.start_date }}</td>
+            <td class="text-sm">{{ leave.end_date }}</td>
+            <td class="text-sm font-semibold">{{ leave.total_days }}</td>
+            <td class="text-sm text-gray-600 max-w-xs">
+              <span title="{{ leave.reason }}">{{ leave.reason[:40] }}{% if leave.reason|length > 40 %}...{% endif %}</span>
+            </td>
+            <td><span class="badge badge-{{ leave.status }}">{{ leave.status }}</span></td>
+            <td class="text-xs text-gray-400">{{ leave.created_at | string | truncate(10, true, '') }}</td>
+            <td>
+              <div class="flex gap-1">
+                {% if session.role in ['admin', 'manager'] and leave.status == 'pending' %}
+                <button onclick="approveLeave({{ leave.id }})" class="btn btn-success btn-sm">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button onclick="showRejectModal({{ leave.id }})" class="btn btn-danger btn-sm">
+                  <i class="fas fa-times"></i>
+                </button>
+                {% elif leave.status == 'pending' and session.role == 'employee' %}
+                <button onclick="cancelLeave({{ leave.id }})" class="btn btn-secondary btn-sm">
+                  Cancel
+                </button>
+                {% elif leave.status == 'rejected' and leave.rejection_reason %}
+                <span class="text-xs text-red-500" title="{{ leave.rejection_reason }}">
+                  <i class="fas fa-info-circle"></i> {{ leave.rejection_reason[:30] }}...
+                </span>
+                {% else %}
+                <span class="text-xs text-gray-300">—</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not leaves %}
+          <tr>
+            <td colspan="9" class="text-center py-12 text-gray-400">
+              <i class="fas fa-calendar-minus text-3xl block mb-2"></i>
+              No leave requests found.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Apply Leave Modal -->
+<div id="applyLeaveModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold"><i class="fas fa-calendar-plus text-primary-600 mr-2"></i>Apply for Leave</h3>
+      <button onclick="closeModal('applyLeaveModal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+    </div>
+
+    <div class="bg-blue-50 rounded-lg p-3 mb-4 text-sm">
+      <p class="font-medium text-blue-800">Your Leave Balance</p>
+      <p class="text-blue-600">Annual: <strong>{{ balance.annual_leave_balance or 0 }} days</strong> | Sick: <strong>{{ balance.sick_leave_balance or 0 }} days</strong></p>
+    </div>
+
+    <form id="applyLeaveForm">
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Leave Type *</label>
+          <select name="leave_type" class="form-input" required>
+            <option value="annual">Annual Leave</option>
+            <option value="sick">Sick Leave</option>
+            <option value="maternity">Maternity Leave</option>
+            <option value="paternity">Paternity Leave</option>
+            <option value="unpaid">Unpaid Leave</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">From Date *</label>
+            <input type="date" name="start_date" required class="form-input" min="{{ today }}">
+          </div>
+          <div>
+            <label class="form-label">To Date *</label>
+            <input type="date" name="end_date" required class="form-input" min="{{ today }}">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Reason *</label>
+          <textarea name="reason" rows="3" required class="form-input" placeholder="Please provide a reason for your leave request..."></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="closeModal('applyLeaveModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="submitLeave()" class="btn btn-primary flex-1" id="submitLeaveBtn">
+          <i class="fas fa-paper-plane mr-1"></i>Submit Request
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reject Modal (for managers) -->
+<div id="rejectModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="text-lg font-semibold mb-4">Reject Leave Request</h3>
+    <input type="hidden" id="rejectLeaveId">
+    <div class="mb-4">
+      <label class="form-label">Reason for Rejection *</label>
+      <textarea id="rejectReason" rows="3" class="form-input" placeholder="Explain why this leave is being rejected..."></textarea>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeModal('rejectModal')" class="btn btn-secondary flex-1">Cancel</button>
+      <button onclick="submitReject()" class="btn btn-danger flex-1">Reject Leave</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function submitLeave() {
+  const btn = document.getElementById('submitLeaveBtn');
+  btn.innerHTML = '<span class="spinner"></span> Submitting...'; btn.disabled = true;
+  const data = await postForm('/leaves/apply', document.getElementById('applyLeaveForm'));
+  btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>Submit Request'; btn.disabled = false;
+  if (data.success) { showToast(data.message, 'success'); closeModal('applyLeaveModal'); setTimeout(() => location.reload(), 1500); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+async function approveLeave(id) {
+  if (!confirm('Approve this leave request?')) return;
+  const data = await postJson(`/leaves/${id}/approve`);
+  if (data.success) { showToast('Leave approved!', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+function showRejectModal(id) {
+  document.getElementById('rejectLeaveId').value = id;
+  document.getElementById('rejectReason').value = '';
+  openModal('rejectModal');
+}
+
+async function submitReject() {
+  const id = document.getElementById('rejectLeaveId').value;
+  const reason = document.getElementById('rejectReason').value.trim();
+  if (!reason) { showToast('Please provide a rejection reason', 'error'); return; }
+  const data = await postJson(`/leaves/${id}/reject`, { reason });
+  if (data.success) { closeModal('rejectModal'); showToast('Leave rejected.', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+async function cancelLeave(id) {
+  if (!confirm('Cancel this leave request?')) return;
+  const data = await postJson(`/leaves/${id}/cancel`);
+  if (data.success) { showToast('Leave cancelled.', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+</script>
+{% endblock %}

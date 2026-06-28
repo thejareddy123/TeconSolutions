@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual Environment
+venv/
+env/
+.env
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+*.db
+*.sqlite
+
+# Uploads (user files - don't commit to git)
+uploads/*
+!uploads/.gitkeep
+
+# Vector Store (ChromaDB data)
+vector_store/chroma_db/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit these!)
+secrets.json
+credentials.json
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+
+# Environment files
+.env.*
+!.env.example
+
+# Local database
+*.sql.gz
+
+# Coverage
+.coverage
+htmlcov/
+
+# macOS/Linux
+*.pid
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local virtual environments
+.venv/

@@ -1,0 +1,219 @@
+{% extends "components/base.html" %}
+{% block title %}Employees - TraitSoftwares{% endblock %}
+{% block page_title %}Employee Management{% endblock %}
+{% block content %}
+<div class="space-y-5">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">All Employees</h2>
+      <p class="text-gray-500 text-sm">{{ users|length }} total employees</p>
+    </div>
+    {% if session.role == 'admin' %}
+    <button onclick="openModal('createModal')" class="btn btn-primary">
+      <i class="fas fa-plus mr-2"></i>Add Employee
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Search -->
+  <div class="card">
+    <form method="get">
+      <div class="flex gap-3">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" name="search" value="{{ search }}" placeholder="Search by name, email, or employee ID..."
+                 class="form-input pl-9">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search %}<a href="/employees" class="btn btn-secondary">Clear</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>ID</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                  {{ u.first_name[0] }}{{ u.last_name[0] }}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800">{{ u.first_name }} {{ u.last_name }}</p>
+                  <p class="text-xs text-gray-400">{{ u.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="font-mono text-sm text-gray-600">{{ u.employee_id }}</td>
+            <td class="text-sm text-gray-600">{{ u.department or '—' }}</td>
+            <td class="text-sm text-gray-600">{{ u.designation or '—' }}</td>
+            <td><span class="badge badge-submitted">{{ u.role }}</span></td>
+            <td>
+              {% if u.is_locked %}
+                <span class="badge badge-rejected">Locked</span>
+              {% elif u.is_active %}
+                <span class="badge badge-approved">Active</span>
+              {% else %}
+                <span class="badge badge-cancelled">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="flex gap-1">
+                <a href="/employees/{{ u.id }}" class="btn btn-secondary btn-sm">
+                  <i class="fas fa-eye"></i>
+                </a>
+                {% if session.role == 'admin' %}
+                <button onclick="toggleStatus({{ u.id }})"
+                        class="btn btn-warning btn-sm"
+                        title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                  <i class="fas fa-{{ 'toggle-on' if u.is_active else 'toggle-off' }}"></i>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not users %}
+          <tr>
+            <td colspan="7" class="text-center py-12 text-gray-400">
+              <i class="fas fa-users text-3xl block mb-2"></i>No employees found.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Employee Modal -->
+{% if session.role == 'admin' %}
+<div id="createModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:620px">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold">Add New Employee</h3>
+      <button onclick="closeModal('createModal')" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <form id="createForm">
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="form-label">First Name *</label>
+          <input type="text" name="first_name" required class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Last Name *</label>
+          <input type="text" name="last_name" required class="form-input">
+        </div>
+        <div class="col-span-2">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" required class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Department</label>
+          <input type="text" name="department" class="form-input" placeholder="e.g. Engineering">
+        </div>
+        <div>
+          <label class="form-label">Designation</label>
+          <input type="text" name="designation" class="form-input" placeholder="e.g. Software Developer">
+        </div>
+        <div>
+          <label class="form-label">Role</label>
+          <select name="role" class="form-input">
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Manager</label>
+          <select name="manager_id" class="form-input">
+            <option value="">None</option>
+            {% for m in managers %}
+            <option value="{{ m.id }}">{{ m.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Date of Joining</label>
+          <input type="date" name="date_of_joining" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Annual Leave Days</label>
+          <input type="number" name="annual_leave" value="12" min="0" max="30" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Sick Leave Days</label>
+          <input type="number" name="sick_leave" value="6" min="0" max="20" class="form-input">
+        </div>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-blue-700">
+        <i class="fas fa-info-circle mr-1"></i>
+        A random temporary password will be generated and sent to the employee's email automatically.
+      </div>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="createEmployee()" class="btn btn-primary flex-1" id="createBtn">
+          <i class="fas fa-user-plus mr-1"></i>Create Employee
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function createEmployee() {
+  const btn = document.getElementById('createBtn');
+  btn.innerHTML = '<span class="spinner"></span> Creating...';
+  btn.disabled = true;
+  
+  const data = await postForm('/employees/create', document.getElementById('createForm'));
+  
+  btn.innerHTML = '<i class="fas fa-user-plus mr-1"></i>Create Employee';
+  btn.disabled = false;
+  
+  if (data.success) {
+    showToast(data.message, 'success');
+    closeModal('createModal');
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    showToast(data.error || 'Failed to create employee', 'error');
+  }
+}
+
+async function toggleStatus(id) {
+  if (!confirm('Toggle this employee\'s active status?')) return;
+  const data = await postJson(`/employees/${id}/toggle-status`);
+  if (data.success) {
+    showToast('Status updated!', 'success');
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    showToast(data.error || 'Failed', 'error');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "components/base.html" %}
+
+{% block title %}Dashboard - TraitSoftwares{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-primary-800 to-primary-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold">Good {{ 'morning' if now_hour < 12 else ('afternoon' if now_hour < 17 else 'evening') }}, {{ session.first_name }}! 👋</h2>
+                <p class="text-primary-200 text-sm mt-1">Here's your overview for today.</p>
+            </div>
+            <div class="text-right hidden sm:block">
+                <p class="text-primary-200 text-sm" id="currentDate"></p>
+                <p class="text-white font-mono text-lg" id="currentTime"></p>
+            </div>
+        </div>
+    </div>
+
+    {% if is_admin %}
+    <!-- ======== ADMIN DASHBOARD ======== -->
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-users text-blue-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ total_employees }}</p>
+                <p class="text-gray-500 text-sm">Total Employees</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-tasks text-green-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ task_stats.total or 0 }}</p>
+                <p class="text-gray-500 text-sm">Total Tasks</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-calendar-minus text-yellow-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ leave_stats.pending or 0 }}</p>
+                <p class="text-gray-500 text-sm">Pending Leaves</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-clock text-purple-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ timesheet_stats.pending_review or 0 }}</p>
+                <p class="text-gray-500 text-sm">Timesheets Pending</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Pending Leaves -->
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-calendar-minus text-yellow-500"></i> Pending Leave Requests
+                </h3>
+                <a href="/leaves?status=pending" class="text-sm text-primary-600 hover:underline">View all →</a>
+            </div>
+            {% if recent_leaves %}
+            <div class="space-y-3">
+                {% for leave in recent_leaves %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">{{ leave.employee_name }}</p>
+                        <p class="text-xs text-gray-500">{{ leave.leave_type | capitalize }} · {{ leave.total_days }} days</p>
+                        <p class="text-xs text-gray-400">{{ leave.start_date }} – {{ leave.end_date }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveLeave({{ leave.id }})"
+                                class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="showRejectModal({{ leave.id }})"
+                                class="btn btn-danger btn-sm">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-check-circle text-3xl mb-2 block text-green-400"></i>
+                <p class="text-sm">No pending leave requests!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pending Timesheets -->
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-clock text-purple-500"></i> Pending Timesheets
+                </h3>
+                <a href="/timesheets?status=submitted" class="text-sm text-primary-600 hover:underline">View all →</a>
+            </div>
+            {% if recent_timesheets %}
+            <div class="space-y-3">
+                {% for ts in recent_timesheets %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">{{ ts.employee_name }}</p>
+                        <p class="text-xs text-gray-500">{{ ts.work_date }} · {{ ts.hours_worked }}h</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveTimesheetDash({{ ts.id }})"
+                                class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-check-circle text-3xl mb-2 block text-green-400"></i>
+                <p class="text-sm">No pending timesheets!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ======== EMPLOYEE DASHBOARD ======== -->
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-tasks text-blue-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ pending_tasks_count }}</p>
+                <p class="text-gray-500 text-sm">Active Tasks</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-umbrella-beach text-green-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ balance.annual_leave_balance or 0 }}</p>
+                <p class="text-gray-500 text-sm">Annual Leave</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-pills text-red-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ balance.sick_leave_balance or 0 }}</p>
+                <p class="text-gray-500 text-sm">Sick Leave</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-clock text-purple-600 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ monthly_hours.total_hours or 0 }}</p>
+                <p class="text-gray-500 text-sm">Hours This Month</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- My Tasks -->
+        <div class="card lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-tasks text-blue-500"></i> My Recent Tasks
+                </h3>
+                <a href="/tasks" class="text-sm text-primary-600 hover:underline">View all →</a>
+            </div>
+            {% if my_tasks %}
+            <div class="space-y-2">
+                {% for task in my_tasks %}
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ task.title }}</p>
+                        <p class="text-xs text-gray-400">Due: {{ task.due_date or 'No deadline' }}</p>
+                    </div>
+                    <span class="badge badge-{{ task.status }}">{{ task.status | replace('_', ' ') }}</span>
+                    <span class="badge badge-{{ task.priority }}">{{ task.priority }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-clipboard-list text-3xl mb-2 block"></i>
+                <p class="text-sm">No tasks assigned to you yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-4">
+            <!-- Upcoming Holidays -->
+            <div class="card">
+                <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fas fa-star text-yellow-500"></i> Upcoming Holidays
+                </h3>
+                {% if upcoming_holidays %}
+                <div class="space-y-2">
+                    {% for holiday in upcoming_holidays %}
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-xs font-bold text-yellow-700">{{ holiday.holiday_date.strftime('%d') if holiday.holiday_date else '' }}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ holiday.name }}</p>
+                            <p class="text-xs text-gray-400">{{ holiday.holiday_date }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400">No upcoming holidays.</p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3 class="font-semibold text-gray-800 mb-3">Quick Actions</h3>
+                <div class="space-y-2">
+                    <a href="/timesheets" class="flex items-center gap-3 p-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium transition">
+                        <i class="fas fa-plus-circle w-4"></i> Log Today's Hours
+                    </a>
+                    <a href="/leaves" class="flex items-center gap-3 p-2.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium transition">
+                        <i class="fas fa-calendar-plus w-4"></i> Apply for Leave
+                    </a>
+                    <a href="/ai-assistant" class="flex items-center gap-3 p-2.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium transition">
+                        <i class="fas fa-robot w-4"></i> Ask AI Assistant
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reject Leave Modal (for admin) -->
+<div id="rejectModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3 class="text-lg font-semibold mb-4">Reject Leave Request</h3>
+        <input type="hidden" id="rejectLeaveId">
+        <div class="mb-4">
+            <label class="form-label">Reason for Rejection</label>
+            <textarea id="rejectReason" rows="3" placeholder="Explain why this leave is being rejected..."
+                      class="form-input"></textarea>
+        </div>
+        <div class="flex gap-3 justify-end">
+            <button onclick="closeModal('rejectModal')" class="btn btn-secondary">Cancel</button>
+            <button onclick="submitReject()" class="btn btn-danger">Reject Leave</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show live clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'});
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', {weekday: 'long', day: 'numeric', month: 'long'});
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    async function approveLeave(leaveId) {
+        if (!confirm('Approve this leave request?')) return;
+        const result = await postJson(`/leaves/${leaveId}/approve`);
+        if (result.success) { showToast('Leave approved!', 'success'); setTimeout(() => location.reload(), 1500); }
+        else showToast(result.error || 'Failed to approve', 'error');
+    }
+
+    function showRejectModal(leaveId) {
+        document.getElementById('rejectLeaveId').value = leaveId;
+        document.getElementById('rejectReason').value = '';
+        openModal('rejectModal');
+    }
+
+    async function submitReject() {
+        const leaveId = document.getElementById('rejectLeaveId').value;
+        const reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) { showToast('Please provide a rejection reason', 'error'); return; }
+        const result = await postJson(`/leaves/${leaveId}/reject`, { reason });
+        if (result.success) { closeModal('rejectModal'); showToast('Leave rejected.', 'success'); setTimeout(() => location.reload(), 1500); }
+        else showToast(result.error || 'Failed', 'error');
+    }
+
+    async function approveTimesheetDash(tsId) {
+        if (!confirm('Approve this timesheet?')) return;
+        const result = await postJson(`/timesheets/${tsId}/approve`);
+        if (result.success) { showToast('Timesheet approved!', 'success'); setTimeout(() => location.reload(), 1500); }
+        else showToast(result.error || 'Failed', 'error');
+    }
+</script>
+{% endblock %}

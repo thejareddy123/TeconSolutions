@@ -1,0 +1,197 @@
+{% extends "components/base.html" %}
+{% block title %}Tasks - TraitSoftwares{% endblock %}
+{% block page_title %}Task Management{% endblock %}
+{% block content %}
+<div class="space-y-5">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">Tasks</h2>
+      <p class="text-gray-500 text-sm">{{ tasks|length }} task(s) found</p>
+    </div>
+    {% if session.role in ['admin', 'manager'] %}
+    <button onclick="openModal('createTaskModal')" class="btn btn-primary">
+      <i class="fas fa-plus mr-2"></i>Create Task
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Filters -->
+  <div class="card">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-40">
+        <label class="form-label">Search</label>
+        <input type="text" name="search" value="{{ filters.search }}" placeholder="Search tasks..." class="form-input">
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select name="status" class="form-input">
+          <option value="">All Status</option>
+          <option value="todo" {{ 'selected' if filters.status=='todo' }}>To Do</option>
+          <option value="in_progress" {{ 'selected' if filters.status=='in_progress' }}>In Progress</option>
+          <option value="review" {{ 'selected' if filters.status=='review' }}>In Review</option>
+          <option value="completed" {{ 'selected' if filters.status=='completed' }}>Completed</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Priority</label>
+        <select name="priority" class="form-input">
+          <option value="">All Priority</option>
+          <option value="low" {{ 'selected' if filters.priority=='low' }}>Low</option>
+          <option value="medium" {{ 'selected' if filters.priority=='medium' }}>Medium</option>
+          <option value="high" {{ 'selected' if filters.priority=='high' }}>High</option>
+          <option value="urgent" {{ 'selected' if filters.priority=='urgent' }}>Urgent</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/tasks" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Task Cards / Table -->
+  {% if tasks %}
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    {% for task in tasks %}
+    <div class="card hover:shadow-md transition cursor-pointer" onclick="window.location='/tasks/{{ task.id }}'">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex gap-2 flex-wrap">
+          <span class="badge badge-{{ task.priority }}">{{ task.priority }}</span>
+          <span class="badge badge-{{ task.status }}">{{ task.status | replace('_', ' ') }}</span>
+        </div>
+        {% if task.due_date %}
+        <span class="text-xs text-gray-400">Due: {{ task.due_date }}</span>
+        {% endif %}
+      </div>
+      
+      <h3 class="font-semibold text-gray-800 mb-1">{{ task.title }}</h3>
+      
+      {% if task.description %}
+      <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+      {% endif %}
+      
+      <div class="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-100">
+        <span><i class="fas fa-user mr-1"></i>{{ task.assignees or task.created_by_name or 'Unassigned' }}</span>
+        {% if task.project_name %}
+        <span><i class="fas fa-folder mr-1"></i>{{ task.project_name }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card text-center py-16 text-gray-400">
+    <i class="fas fa-tasks text-4xl mb-3 block"></i>
+    <p class="text-lg font-medium">No tasks found</p>
+    <p class="text-sm mt-1">
+      {% if session.role in ['admin', 'manager'] %}
+      Create your first task using the button above.
+      {% else %}
+      No tasks have been assigned to you yet.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Create Task Modal -->
+{% if session.role in ['admin', 'manager'] %}
+<div id="createTaskModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:640px">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold"><i class="fas fa-plus-circle text-primary-600 mr-2"></i>Create New Task</h3>
+      <button onclick="closeModal('createTaskModal')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+    </div>
+    <form id="createTaskForm">
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Task Title *</label>
+          <input type="text" name="title" required class="form-input" placeholder="Enter task title">
+        </div>
+        <div>
+          <label class="form-label">Description</label>
+          <textarea name="description" rows="3" class="form-input" placeholder="Describe the task..."></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-input">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Project Name</label>
+            <input type="text" name="project_name" class="form-input" placeholder="Optional">
+          </div>
+          <div>
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Due Date</label>
+            <input type="date" name="due_date" class="form-input">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Assign To (select multiple)</label>
+          <div class="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto">
+            {% for emp in employees %}
+            <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 px-2 rounded">
+              <input type="checkbox" value="{{ emp.id }}" class="assignee-check rounded">
+              <span class="text-sm">{{ emp.first_name }} {{ emp.last_name }}
+                <span class="text-gray-400 text-xs">({{ emp.department or emp.employee_id }})</span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="closeModal('createTaskModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="createTask()" class="btn btn-primary flex-1" id="createTaskBtn">
+          <i class="fas fa-plus mr-1"></i>Create Task
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function createTask() {
+  const btn = document.getElementById('createTaskBtn');
+  btn.innerHTML = '<span class="spinner"></span> Creating...'; btn.disabled = true;
+
+  // Collect checked assignees
+  const checkboxes = document.querySelectorAll('.assignee-check:checked');
+  const assigneeIds = Array.from(checkboxes).map(cb => cb.value).join(',');
+
+  const form = document.getElementById('createTaskForm');
+  const formData = new FormData(form);
+  formData.append('assignees', assigneeIds);
+
+  try {
+    const resp = await fetch('/tasks/create', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('Task created successfully!', 'success');
+      closeModal('createTaskModal');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      showToast(data.error || 'Failed to create task', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  } finally {
+    btn.innerHTML = '<i class="fas fa-plus mr-1"></i>Create Task'; btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

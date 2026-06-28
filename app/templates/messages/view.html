@@ -1,0 +1,66 @@
+{% extends "components/base.html" %}
+{% block title %}Message - TraitSoftwares{% endblock %}
+{% block page_title %}View Message{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="mb-4">
+    <a href="/messages" class="text-sm text-primary-600 hover:underline"><i class="fas fa-arrow-left mr-1"></i>Back to Messages</a>
+  </div>
+  <div class="card">
+    <div class="flex items-start gap-4 mb-5 pb-5 border-b border-gray-100">
+      <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold flex-shrink-0">
+        {{ message.sender_name[:2].upper() }}
+      </div>
+      <div class="flex-1">
+        <p class="font-bold text-gray-800">{{ message.subject or '(No Subject)' }}</p>
+        <p class="text-sm text-gray-500 mt-1">
+          <span class="font-medium">From:</span> {{ message.sender_name }} &nbsp;·&nbsp;
+          <span class="font-medium">To:</span> {{ message.receiver_name }}
+        </p>
+        <p class="text-xs text-gray-400 mt-1">{{ message.created_at }}</p>
+      </div>
+    </div>
+    <div class="prose max-w-none text-gray-700 text-sm leading-relaxed">
+      {{ message.body | replace('\n', '<br>') | safe }}
+    </div>
+    <div class="mt-6 pt-4 border-t border-gray-100">
+      <button onclick="openModal('replyModal')" class="btn btn-primary">
+        <i class="fas fa-reply mr-2"></i>Reply
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reply Modal -->
+<div id="replyModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold mb-4">Reply to {{ message.sender_name }}</h3>
+    <form id="replyForm">
+      <input type="hidden" name="receiver_id" value="{{ message.sender_id }}">
+      <div class="mb-4">
+        <label class="form-label">Subject</label>
+        <input type="text" name="subject" class="form-input" value="Re: {{ message.subject }}">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Message *</label>
+        <textarea name="body" rows="5" required class="form-input" placeholder="Your reply..."></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" onclick="closeModal('replyModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="sendReply()" class="btn btn-primary flex-1">
+          <i class="fas fa-paper-plane mr-1"></i>Send Reply
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function sendReply() {
+  const data = await postForm('/messages/send', document.getElementById('replyForm'));
+  if (data.success) { showToast('Reply sent!', 'success'); closeModal('replyModal'); }
+  else showToast(data.error || 'Failed', 'error');
+}
+</script>
+{% endblock %}

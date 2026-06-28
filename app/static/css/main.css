@@ -1,0 +1,307 @@
+/* ============================================================
+   TraitSoftwares - Main CSS
+   Custom styles that work alongside Tailwind CSS
+   ============================================================ */
+
+/* Base */
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+}
+
+/* ============================================================
+   SIDEBAR NAVIGATION LINKS
+   ============================================================ */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #93c5fd;  /* primary-300 */
+    transition: all 0.15s ease;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background-color: #1d4ed8;  /* primary-700 */
+    color: #ffffff;
+}
+
+.nav-link.active {
+    background-color: #2563eb;  /* primary-600 */
+    color: #ffffff;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ============================================================
+   BADGES / STATUS INDICATORS
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge-pending    { background: #fef3c7; color: #92400e; }
+.badge-approved   { background: #d1fae5; color: #065f46; }
+.badge-rejected   { background: #fee2e2; color: #991b1b; }
+.badge-cancelled  { background: #f3f4f6; color: #374151; }
+.badge-submitted  { background: #dbeafe; color: #1e40af; }
+.badge-draft      { background: #f3f4f6; color: #6b7280; }
+
+.badge-todo       { background: #f3f4f6; color: #374151; }
+.badge-in_progress { background: #dbeafe; color: #1e40af; }
+.badge-review     { background: #fef3c7; color: #92400e; }
+.badge-completed  { background: #d1fae5; color: #065f46; }
+.badge-cancelled  { background: #f3f4f6; color: #6b7280; }
+
+.badge-low    { background: #f0fdf4; color: #166534; }
+.badge-medium { background: #fef3c7; color: #92400e; }
+.badge-high   { background: #fee2e2; color: #991b1b; }
+.badge-urgent { background: #7f1d1d; color: #ffffff; }
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+.form-input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.875rem;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    background: white;
+}
+
+.form-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 5px;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-primary   { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-success   { background: #059669; color: white; }
+.btn-success:hover { background: #047857; }
+
+.btn-danger    { background: #dc2626; color: white; }
+.btn-danger:hover { background: #b91c1c; }
+
+.btn-warning   { background: #d97706; color: white; }
+.btn-warning:hover { background: #b45309; }
+
+.btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background: #e5e7eb; }
+
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.data-table thead th {
+    background: #f8fafc;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+}
+.data-table tbody td {
+    padding: 12px 14px;
+    font-size: 0.875rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+.data-table tbody tr:hover { background: #f8fafc; }
+
+/* ============================================================
+   LOADING SPINNER
+   ============================================================ */
+.spinner {
+    width: 20px; height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Full page loading overlay */
+#pageLoader {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+}
+
+.modal-box {
+    background: white;
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* ============================================================
+   AI CHAT
+   ============================================================ */
+.chat-bubble-user {
+    background: #2563eb;
+    color: white;
+    border-radius: 18px 18px 4px 18px;
+    padding: 10px 14px;
+    max-width: 80%;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.chat-bubble-ai {
+    background: #f3f4f6;
+    color: #111827;
+    border-radius: 18px 18px 18px 4px;
+    padding: 10px 14px;
+    max-width: 85%;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.typing-dots span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #9ca3af;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
+
+/* ============================================================
+   CALENDAR
+   ============================================================ */
+.cal-day {
+    min-height: 80px;
+    border: 1px solid #e5e7eb;
+    padding: 4px;
+    font-size: 0.75rem;
+    vertical-align: top;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.cal-day:hover { background: #eff6ff; }
+.cal-day.today { background: #eff6ff; }
+.cal-day.today .day-num { 
+    background: #2563eb; color: white; 
+    border-radius: 50%; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+}
+.cal-day.weekend { background: #fafafa; }
+.cal-event {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+    cursor: pointer;
+}
+
+/* ============================================================
+   RESPONSIVE - Mobile adjustments
+   ============================================================ */
+@media (max-width: 1024px) {
+    .data-table { font-size: 0.8rem; }
+    .data-table thead th, .data-table tbody td { padding: 8px 10px; }
+}
+
+@media (max-width: 640px) {
+    .modal-box { border-radius: 10px; padding: 1rem; }
+    .btn { padding: 8px 14px; }
+}

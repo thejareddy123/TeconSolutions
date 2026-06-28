@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TraitSoftwares{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    
+    <script>
+        // Configure Tailwind custom colors
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 
+                            50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6',
+                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a'
+                        }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<!-- ============================================================
+     SIDEBAR NAVIGATION
+     ============================================================ -->
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-primary-900 text-white flex flex-col transition-transform duration-300 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0">
+        
+        <!-- Logo -->
+        <div class="flex items-center px-6 py-5 border-b border-primary-800">
+            <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-briefcase text-white text-sm"></i>
+            </div>
+            <div>
+                <p class="font-bold text-sm">TraitSoftwares</p>
+                <p class="text-primary-300 text-xs">Management System</p>
+            </div>
+        </div>
+        
+        <!-- User Info -->
+        <div class="px-4 py-3 border-b border-primary-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {{ session.name[:2].upper() if session else 'U' }}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium truncate">{{ session.name if session else 'User' }}</p>
+                    <p class="text-primary-300 text-xs capitalize">{{ session.role if session else '' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-3 py-4 overflow-y-auto space-y-1">
+            
+            <a href="/dashboard" class="nav-link {% if request.url.path == '/dashboard' %}active{% endif %}">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+
+            {% if session and session.role in ['admin', 'manager'] %}
+            <a href="/employees" class="nav-link {% if '/employees' in request.url.path %}active{% endif %}">
+                <i class="fas fa-users w-5"></i>
+                <span>Employees</span>
+            </a>
+            {% endif %}
+
+            <a href="/tasks" class="nav-link {% if '/tasks' in request.url.path %}active{% endif %}">
+                <i class="fas fa-tasks w-5"></i>
+                <span>Tasks</span>
+            </a>
+
+            <a href="/timesheets" class="nav-link {% if '/timesheets' in request.url.path %}active{% endif %}">
+                <i class="fas fa-clock w-5"></i>
+                <span>Timesheets</span>
+            </a>
+
+            <a href="/leaves" class="nav-link {% if '/leaves' in request.url.path %}active{% endif %}">
+                <i class="fas fa-calendar-minus w-5"></i>
+                <span>Leaves</span>
+            </a>
+
+            <a href="/holidays" class="nav-link {% if '/holidays' in request.url.path %}active{% endif %}">
+                <i class="fas fa-star w-5"></i>
+                <span>Holidays</span>
+            </a>
+
+            <a href="/calendar" class="nav-link {% if '/calendar' in request.url.path %}active{% endif %}">
+                <i class="fas fa-calendar-alt w-5"></i>
+                <span>Calendar</span>
+            </a>
+
+            {% if session and session.role in ['admin', 'manager'] %}
+            <a href="/reports" class="nav-link {% if '/reports' in request.url.path %}active{% endif %}">
+                <i class="fas fa-chart-bar w-5"></i>
+                <span>Reports</span>
+            </a>
+            {% endif %}
+
+            <a href="/messages" class="nav-link {% if '/messages' in request.url.path %}active{% endif %}">
+                <i class="fas fa-envelope w-5"></i>
+                <span>Messages</span>
+                {% if unread_messages and unread_messages > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{{ unread_messages }}</span>
+                {% endif %}
+            </a>
+
+            <a href="/ai-assistant" class="nav-link {% if '/ai-assistant' in request.url.path %}active{% endif %}">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Assistant</span>
+                <span class="ml-auto text-xs bg-primary-600 px-1.5 py-0.5 rounded">AI</span>
+            </a>
+
+            {% if session and session.role == 'admin' %}
+            <div class="pt-3 border-t border-primary-800 mt-3">
+                <p class="text-xs text-primary-400 uppercase px-3 mb-2">Admin</p>
+                <a href="/admin/knowledge-base" class="nav-link {% if '/admin/knowledge-base' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-book w-5"></i>
+                    <span>Knowledge Base</span>
+                </a>
+            </div>
+            {% endif %}
+        </nav>
+
+        <!-- Logout -->
+        <div class="px-3 py-4 border-t border-primary-800">
+            <a href="/profile" class="nav-link mb-1">
+                <i class="fas fa-user w-5"></i>
+                <span>My Profile</span>
+            </a>
+            <a href="/logout" class="nav-link text-red-300 hover:text-red-200 hover:bg-red-900">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- Top Navbar -->
+        <header class="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 flex items-center justify-between flex-shrink-0">
+            
+            <!-- Mobile menu toggle -->
+            <button id="menuToggle" class="lg:hidden text-gray-500 hover:text-gray-700" onclick="toggleSidebar()">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+
+            <!-- Page Title -->
+            <h1 class="text-lg font-semibold text-gray-800 hidden lg:block">{% block page_title %}Dashboard{% endblock %}</h1>
+            <span class="text-lg font-semibold text-gray-800 lg:hidden">{% block page_title_mobile %}{% endblock %}</span>
+
+            <!-- Right side: notifications and user -->
+            <div class="flex items-center gap-3">
+                
+                <!-- Notifications Bell -->
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i class="fas fa-bell text-lg"></i>
+                        {% if unread_notifications and unread_notifications > 0 %}
+                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {{ unread_notifications if unread_notifications < 10 else '9+' }}
+                        </span>
+                        {% endif %}
+                    </button>
+                    
+                    <!-- Notification Dropdown -->
+                    <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                        <div class="flex items-center justify-between px-4 py-3 border-b">
+                            <h3 class="font-semibold text-gray-800">Notifications</h3>
+                            <button onclick="markAllRead()" class="text-xs text-primary-600 hover:underline">Mark all read</button>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto">
+                            <div class="text-center text-gray-400 py-8 text-sm">Loading...</div>
+                        </div>
+                        <div class="px-4 py-2 border-t">
+                            <a href="/messages" class="text-xs text-primary-600 hover:underline">View all messages →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Avatar -->
+                <a href="/profile" class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900">
+                    <div class="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-xs font-bold">
+                        {{ session.name[:2].upper() if session else 'U' }}
+                    </div>
+                    <span class="hidden md:block font-medium">{{ session.first_name if session else '' }}</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- Overlay for mobile sidebar -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+<!-- Toast Notification (for success/error messages) -->
+<div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+    <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMsg"></span>
+    </div>
+</div>
+
+<!-- Custom JS -->
+<script src="/static/js/main.js"></script>
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

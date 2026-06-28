@@ -1,0 +1,269 @@
+{% extends "components/base.html" %}
+
+{% block title %}AI Assistant - TraitSoftwares{% endblock %}
+{% block page_title %}AI Employee Assistant{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto h-full flex flex-col" style="height: calc(100vh - 120px);">
+
+    <!-- Header Card -->
+    <div class="bg-gradient-to-r from-purple-700 to-primary-700 rounded-xl p-5 text-white mb-4 flex-shrink-0">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-robot text-white text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold">TraitSoftwares AI Assistant</h2>
+                    <p class="text-purple-200 text-sm">Powered by Gemini AI · Knows your data</p>
+                </div>
+            </div>
+            <button onclick="clearHistory()" 
+                    class="text-purple-200 hover:text-white text-xs border border-purple-400 hover:border-white px-3 py-1.5 rounded-lg transition">
+                <i class="fas fa-trash mr-1"></i> Clear Chat
+            </button>
+        </div>
+
+        <!-- Example Questions -->
+        <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-xs text-purple-200 mr-1 self-center">Try:</span>
+            {% set examples = [
+                "How many leave days do I have left?",
+                "What tasks are pending for me?",
+                "Do I need to submit a timesheet today?",
+                "What is the leave policy?"
+            ] %}
+            {% for q in examples %}
+            <button onclick="askQuestion(`{{ q }}`)"
+                    class="text-xs bg-white bg-opacity-15 hover:bg-opacity-25 text-white px-3 py-1.5 rounded-full transition">
+                {{ q }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="card flex-1 flex flex-col min-h-0">
+        
+        <!-- Messages Area -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <!-- Welcome message from AI -->
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div class="chat-bubble-ai">
+                    <p>Hi {{ session.first_name }}! 👋 I'm your AI assistant.</p>
+                    <p class="mt-1">I know about your <strong>tasks, leave balance, timesheets</strong>, and company policies. Ask me anything!</p>
+                </div>
+            </div>
+
+            <!-- Load previous chat history -->
+            {% for msg in chat_history %}
+            
+            <!-- User message -->
+            <div class="flex items-start gap-3 flex-row-reverse">
+                <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-white text-xs font-bold">{{ session.name[:2].upper() }}</span>
+                </div>
+                <div class="chat-bubble-user">{{ msg.question }}</div>
+            </div>
+
+            <!-- AI response -->
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div>
+                    <div class="chat-bubble-ai">{{ msg.answer | replace('\n', '<br>') | safe }}</div>
+                    {% if msg.sources_used %}
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for src in msg.sources_used %}
+                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                            <i class="fas fa-file-alt mr-1"></i>{{ src }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Typing Indicator (hidden by default) -->
+        <div id="typingIndicator" class="hidden px-4 pb-2">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div class="chat-bubble-ai">
+                    <div class="typing-dots flex items-center gap-1">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-gray-100 p-4 flex-shrink-0">
+            <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                    <textarea 
+                        id="questionInput"
+                        placeholder="Ask me anything about your tasks, leaves, timesheets, or company policy..."
+                        rows="1"
+                        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        onkeydown="handleKeyPress(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                </div>
+                <button id="sendBtn"
+                        onclick="sendQuestion()"
+                        class="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-3 transition flex items-center gap-2 font-medium text-sm flex-shrink-0">
+                    <i class="fas fa-paper-plane"></i>
+                    <span class="hidden sm:block">Send</span>
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 text-center">
+                <i class="fas fa-shield-alt mr-1"></i>
+                AI uses your personal data to give personalized answers. Data stays within your organization.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-scroll to bottom of chat
+    function scrollToBottom() {
+        const chat = document.getElementById('chatMessages');
+        chat.scrollTop = chat.scrollHeight;
+    }
+    scrollToBottom();
+
+    // Textarea auto-resize
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    // Send on Enter (Shift+Enter for new line)
+    function handleKeyPress(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendQuestion();
+        }
+    }
+
+    function askQuestion(question) {
+        document.getElementById('questionInput').value = question;
+        sendQuestion();
+    }
+
+    async function sendQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+        
+        if (!question) return;
+        
+        // Add user message to chat
+        addUserMessage(question);
+        input.value = '';
+        input.style.height = 'auto';
+        
+        // Show typing indicator
+        document.getElementById('typingIndicator').classList.remove('hidden');
+        document.getElementById('sendBtn').disabled = true;
+        scrollToBottom();
+        
+        try {
+            const formData = new FormData();
+            formData.append('question', question);
+            
+            const response = await fetch('/api/ai/ask', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            document.getElementById('typingIndicator').classList.add('hidden');
+            
+            if (data.error) {
+                addAiMessage('Sorry, I encountered an error: ' + data.error, []);
+            } else {
+                addAiMessage(data.answer, data.sources || []);
+            }
+            
+        } catch (err) {
+            document.getElementById('typingIndicator').classList.add('hidden');
+            addAiMessage('Connection error. Please check your internet and try again.', []);
+        } finally {
+            document.getElementById('sendBtn').disabled = false;
+            scrollToBottom();
+        }
+    }
+
+    function addUserMessage(text) {
+        const chat = document.getElementById('chatMessages');
+        const initials = '{{ session.name[:2].upper() }}';
+        
+        const div = document.createElement('div');
+        div.className = 'flex items-start gap-3 flex-row-reverse';
+        div.innerHTML = `
+            <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold">${initials}</span>
+            </div>
+            <div class="chat-bubble-user">${escapeHtml(text)}</div>
+        `;
+        chat.appendChild(div);
+        scrollToBottom();
+    }
+
+    function addAiMessage(text, sources) {
+        const chat = document.getElementById('chatMessages');
+        
+        // Format the text: convert newlines to <br>, make **bold**
+        let formatted = escapeHtml(text)
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+        
+        let sourcesHtml = '';
+        if (sources && sources.length > 0) {
+            sourcesHtml = `<div class="flex flex-wrap gap-1 mt-1">
+                ${sources.map(s => `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full"><i class="fas fa-file-alt mr-1"></i>${escapeHtml(s)}</span>`).join('')}
+            </div>`;
+        }
+        
+        const div = document.createElement('div');
+        div.className = 'flex items-start gap-3';
+        div.innerHTML = `
+            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot text-white text-xs"></i>
+            </div>
+            <div>
+                <div class="chat-bubble-ai">${formatted}</div>
+                ${sourcesHtml}
+            </div>
+        `;
+        chat.appendChild(div);
+        scrollToBottom();
+    }
+
+    async function clearHistory() {
+        if (!confirm('Clear your entire chat history?')) return;
+        const result = await postJson('/api/ai/clear-history');
+        if (result.success) {
+            // Remove all messages except the first welcome one
+            const chat = document.getElementById('chatMessages');
+            const messages = chat.querySelectorAll('div.flex');
+            messages.forEach((el, i) => { if (i > 0) el.remove(); });
+            showToast('Chat history cleared!', 'success');
+        }
+    }
+</script>
+{% endblock %}

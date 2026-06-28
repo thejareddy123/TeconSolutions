@@ -1,0 +1,139 @@
+{% extends "components/base.html" %}
+{% block title %}Holidays - TraitSoftwares{% endblock %}
+{% block page_title %}Company Holidays{% endblock %}
+{% block content %}
+<div class="space-y-5">
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">Holidays {{ year }}</h2>
+      <p class="text-gray-500 text-sm">{{ holidays|length }} holidays this year</p>
+    </div>
+    <div class="flex gap-3">
+      <!-- Year Selector -->
+      <form method="get" class="flex gap-2">
+        <select name="year" class="form-input" onchange="this.form.submit()">
+          {% for y in [year-1, year, year+1] %}
+          <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      {% if session.role == 'admin' %}
+      <button onclick="openModal('addHolidayModal')" class="btn btn-primary">
+        <i class="fas fa-plus mr-2"></i>Add Holiday
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Holiday Grid -->
+  {% if holidays %}
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for h in holidays %}
+    <div class="card flex items-center gap-4 hover:shadow-md transition">
+      <div class="w-14 h-14 rounded-xl flex flex-col items-center justify-center flex-shrink-0
+        {% if h.holiday_type == 'national' %}bg-orange-100 text-orange-700
+        {% elif h.holiday_type == 'religious' %}bg-purple-100 text-purple-700
+        {% else %}bg-blue-100 text-blue-700{% endif %}">
+        <span class="text-lg font-bold leading-none">{{ h.holiday_date.strftime('%d') if h.holiday_date else '' }}</span>
+        <span class="text-xs">{{ h.holiday_date.strftime('%b') if h.holiday_date else '' }}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-gray-800">{{ h.name }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ h.holiday_date }} · 
+          <span class="capitalize">{{ h.holiday_type }}</span>
+        </p>
+        {% if h.description %}
+        <p class="text-xs text-gray-500 mt-1">{{ h.description }}</p>
+        {% endif %}
+      </div>
+      {% if session.role == 'admin' %}
+      <button onclick="deleteHoliday({{ h.id }}, '{{ h.name }}')"
+              class="text-red-400 hover:text-red-600 flex-shrink-0">
+        <i class="fas fa-trash text-sm"></i>
+      </button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card text-center py-16 text-gray-400">
+    <i class="fas fa-star text-4xl mb-3 block text-yellow-300"></i>
+    <p class="text-lg font-medium">No holidays found for {{ year }}</p>
+    {% if session.role == 'admin' %}
+    <p class="text-sm mt-1">Click "Add Holiday" to add company holidays.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Holiday Modal (Admin only) -->
+{% if session.role == 'admin' %}
+<div id="addHolidayModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold"><i class="fas fa-star text-yellow-500 mr-2"></i>Add Holiday</h3>
+      <button onclick="closeModal('addHolidayModal')" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <form id="addHolidayForm">
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Holiday Name *</label>
+          <input type="text" name="name" required class="form-input" placeholder="e.g. Diwali">
+        </div>
+        <div>
+          <label class="form-label">Date *</label>
+          <input type="date" name="holiday_date" required class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Type</label>
+          <select name="holiday_type" class="form-input">
+            <option value="national">National Holiday</option>
+            <option value="religious">Religious Holiday</option>
+            <option value="company">Company Holiday</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Description (Optional)</label>
+          <input type="text" name="description" class="form-input" placeholder="Brief description">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="closeModal('addHolidayModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="addHoliday()" class="btn btn-primary flex-1" id="addHolidayBtn">
+          <i class="fas fa-plus mr-1"></i>Add Holiday
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function addHoliday() {
+  const btn = document.getElementById('addHolidayBtn');
+  btn.innerHTML = '<span class="spinner"></span> Adding...'; btn.disabled = true;
+  const data = await postForm('/holidays/create', document.getElementById('addHolidayForm'));
+  btn.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Holiday'; btn.disabled = false;
+  if (data.success) {
+    showToast(data.message, 'success');
+    closeModal('addHolidayModal');
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    showToast(data.error || 'Failed to add holiday', 'error');
+  }
+}
+
+async function deleteHoliday(id, name) {
+  if (!confirm(`Delete holiday "${name}"?`)) return;
+  const data = await postJson(`/holidays/${id}/delete`);
+  if (data.success) { showToast('Holiday deleted!', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+</script>
+{% endblock %}

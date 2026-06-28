@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error {{ code }} - TraitSoftwares</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+<div class="text-center max-w-md">
+    <div class="text-8xl font-black text-gray-200 mb-4">{{ code }}</div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ 'Page Not Found' if code == 404 else 'Server Error' }}</h1>
+    <p class="text-gray-500 mb-6">{{ error }}</p>
+    <a href="/dashboard" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition">
+        ← Go to Dashboard
+    </a>
+</div>
+</body>
+</html>

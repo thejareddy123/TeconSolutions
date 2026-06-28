@@ -1,0 +1,242 @@
+{% extends "components/base.html" %}
+{% block title %}Timesheets - TraitSoftwares{% endblock %}
+{% block page_title %}Timesheet Management{% endblock %}
+{% block content %}
+<div class="space-y-5">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800">Timesheets</h2>
+      <p class="text-gray-500 text-sm">{{ current_month_name }}</p>
+    </div>
+    <button onclick="openModal('logTimeModal')" class="btn btn-primary">
+      <i class="fas fa-plus mr-2"></i>Log Hours
+    </button>
+  </div>
+
+  <!-- Month Summary Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="card text-center border-l-4 border-blue-500">
+      <p class="text-2xl font-bold text-blue-600">{{ monthly_hours.total_hours or 0 }}</p>
+      <p class="text-sm text-gray-500 mt-1">Total Hours</p>
+    </div>
+    <div class="card text-center border-l-4 border-green-500">
+      <p class="text-2xl font-bold text-green-600">{{ monthly_hours.approved_hours or 0 }}</p>
+      <p class="text-sm text-gray-500 mt-1">Approved Hours</p>
+    </div>
+    <div class="card text-center border-l-4 border-yellow-500">
+      <p class="text-2xl font-bold text-yellow-600">{{ monthly_hours.total_days or 0 }}</p>
+      <p class="text-sm text-gray-500 mt-1">Days Logged</p>
+    </div>
+    <div class="card text-center border-l-4 border-purple-500">
+      <p class="text-2xl font-bold text-purple-600">{{ timesheets | selectattr('status', 'equalto', 'submitted') | list | length }}</p>
+      <p class="text-sm text-gray-500 mt-1">Pending Review</p>
+    </div>
+  </div>
+
+  <!-- Month Navigation -->
+  <div class="card">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="form-label">Month</label>
+        <select name="month" class="form-input">
+          {% for m in range(1, 13) %}
+          <option value="{{ m }}" {{ 'selected' if m == month }}>
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Year</label>
+        <select name="year" class="form-input">
+          {% for y in [year-1, year, year+1] %}
+          <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">View</button>
+    </form>
+  </div>
+
+  <!-- Timesheets Table -->
+  <div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% if session.role in ['admin', 'manager'] %}
+            <th>Employee</th>
+            {% endif %}
+            <th>Date</th>
+            <th>Hours</th>
+            <th>Task</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Reviewer Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ts in timesheets %}
+          <tr>
+            {% if session.role in ['admin', 'manager'] %}
+            <td>
+              <p class="font-medium text-sm">{{ ts.employee_name }}</p>
+              <p class="text-xs text-gray-400">{{ ts.department or '' }}</p>
+            </td>
+            {% endif %}
+            <td class="font-medium text-sm">{{ ts.work_date }}</td>
+            <td>
+              <span class="font-bold text-primary-600">{{ ts.hours_worked }}h</span>
+            </td>
+            <td class="text-sm text-gray-500">{{ ts.task_title or '—' }}</td>
+            <td class="text-sm text-gray-600 max-w-xs">
+              <span title="{{ ts.description }}">{{ ts.description[:50] }}{% if ts.description|length > 50 %}...{% endif %}</span>
+            </td>
+            <td><span class="badge badge-{{ ts.status }}">{{ ts.status }}</span></td>
+            <td class="text-xs text-gray-400">{{ ts.review_notes or '—' }}</td>
+            <td>
+              <div class="flex gap-1">
+                {% if ts.status == 'draft' and (session.role == 'employee' or session.user_id == ts.user_id) %}
+                <button onclick="submitTimesheet({{ ts.id }})" class="btn btn-primary btn-sm" title="Submit for approval">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+                {% endif %}
+                {% if session.role in ['admin', 'manager'] and ts.status == 'submitted' %}
+                <button onclick="approveTs({{ ts.id }})" class="btn btn-success btn-sm">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button onclick="showRejectTs({{ ts.id }})" class="btn btn-danger btn-sm">
+                  <i class="fas fa-times"></i>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not timesheets %}
+          <tr>
+            <td colspan="8" class="text-center py-12 text-gray-400">
+              <i class="fas fa-clock text-3xl block mb-2"></i>
+              No timesheet entries for {{ current_month_name }}.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Log Hours Modal -->
+<div id="logTimeModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold"><i class="fas fa-clock text-primary-600 mr-2"></i>Log Work Hours</h3>
+      <button onclick="closeModal('logTimeModal')" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <form id="logTimeForm">
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Work Date *</label>
+          <input type="date" name="work_date" required class="form-input" value="{{ today }}">
+        </div>
+        <div>
+          <label class="form-label">Hours Worked *</label>
+          <input type="number" name="hours_worked" required class="form-input"
+                 min="0.5" max="24" step="0.5" placeholder="e.g. 8 or 7.5">
+          <p class="text-xs text-gray-400 mt-1">Use decimals for partial hours (e.g. 7.5 = 7h 30min)</p>
+        </div>
+        <div>
+          <label class="form-label">Related Task (Optional)</label>
+          <select name="task_id" class="form-input">
+            <option value="">No specific task</option>
+            {% for task in my_tasks %}
+            <option value="{{ task.id }}">{{ task.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Work Description *</label>
+          <textarea name="description" rows="3" required class="form-input"
+                    placeholder="Describe what you worked on today..."></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="button" onclick="closeModal('logTimeModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button type="button" onclick="logHours()" class="btn btn-primary flex-1" id="logBtn">
+          <i class="fas fa-save mr-1"></i>Save Entry
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reject Timesheet Modal -->
+<div id="rejectTsModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 class="text-lg font-semibold mb-4">Reject Timesheet</h3>
+    <input type="hidden" id="rejectTsId">
+    <div class="mb-4">
+      <label class="form-label">Reason *</label>
+      <textarea id="rejectTsNotes" rows="3" class="form-input" placeholder="Why is this timesheet being rejected?"></textarea>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeModal('rejectTsModal')" class="btn btn-secondary flex-1">Cancel</button>
+      <button onclick="submitRejectTs()" class="btn btn-danger flex-1">Reject</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function logHours() {
+  const btn = document.getElementById('logBtn');
+  btn.innerHTML = '<span class="spinner"></span> Saving...'; btn.disabled = true;
+  const data = await postForm('/timesheets/log', document.getElementById('logTimeForm'));
+  btn.innerHTML = '<i class="fas fa-save mr-1"></i>Save Entry'; btn.disabled = false;
+  if (data.success) {
+    showToast(data.message, 'success');
+    closeModal('logTimeModal');
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    showToast(data.error || 'Failed to save', 'error');
+  }
+}
+
+async function submitTimesheet(id) {
+  if (!confirm('Submit this timesheet for approval?')) return;
+  const data = await postJson(`/timesheets/${id}/submit`);
+  if (data.success) { showToast('Timesheet submitted!', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+async function approveTs(id) {
+  if (!confirm('Approve this timesheet?')) return;
+  const data = await postJson(`/timesheets/${id}/approve`);
+  if (data.success) { showToast('Timesheet approved!', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+
+function showRejectTs(id) {
+  document.getElementById('rejectTsId').value = id;
+  document.getElementById('rejectTsNotes').value = '';
+  openModal('rejectTsModal');
+}
+
+async function submitRejectTs() {
+  const id = document.getElementById('rejectTsId').value;
+  const notes = document.getElementById('rejectTsNotes').value.trim();
+  if (!notes) { showToast('Please provide a reason', 'error'); return; }
+  const data = await postJson(`/timesheets/${id}/reject`, { notes });
+  if (data.success) { closeModal('rejectTsModal'); showToast('Timesheet rejected.', 'success'); setTimeout(() => location.reload(), 1200); }
+  else showToast(data.error || 'Failed', 'error');
+}
+</script>
+{% endblock %}
