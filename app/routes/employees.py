@@ -104,7 +104,7 @@ async def create_employee(
         # Create notification
         notification_model.create_notification(
             new_id,
-            "Welcome to TraitSoftwares! 🎉",
+            "Welcome to TeconSolutions! 🎉",
             f"Your account has been created. Employee ID: {employee_id}",
             "account_created"
         )

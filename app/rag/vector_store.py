@@ -3,14 +3,19 @@
 # ChromaDB setup and operations for storing/searching embeddings
 # ============================================================
 
-import chromadb
-from chromadb.utils import embedding_functions
+try:
+    import chromadb  # type: ignore[import]
+    from chromadb.utils import embedding_functions  # type: ignore[import]
+except ImportError:
+    chromadb = None
+    embedding_functions = None
+
 import os
 from app.utils.config import settings
 
 
 # Collection name in ChromaDB where all document chunks are stored
-COLLECTION_NAME = "traitsoftwares_knowledge"
+COLLECTION_NAME = "TeconSolutions_knowledge"
 
 
 def get_chroma_client():
@@ -42,7 +47,7 @@ def get_collection():
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
         embedding_function=embedding_fn,
-        metadata={"description": "TraitSoftwares HR knowledge base"}
+        metadata={"description": "TeconSolutions HR knowledge base"}
     )
     
     return collection

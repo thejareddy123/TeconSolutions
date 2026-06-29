@@ -1,4 +1,4 @@
-TRAITSOFTWARES - EMPLOYEE HANDBOOK & POLICY DOCUMENT
+TeconSolutions - EMPLOYEE HANDBOOK & POLICY DOCUMENT
 Version 1.0 | 2025
 
 =======================================================
@@ -32,7 +32,7 @@ SECTION 1: LEAVE POLICY
 - Maximum unpaid leave is 30 days per year.
 
 1.6 LEAVE APPLICATION PROCESS
-- All leaves must be applied through the HR system (TraitSoftwares portal).
+- All leaves must be applied through the HR system (TeconSolutions portal).
 - Leaves must be approved by the direct manager.
 - Emergency leaves can be communicated via phone/message and applied retroactively.
 - Leave applications submitted after the leave date will be treated as unauthorized absence.
@@ -42,7 +42,7 @@ SECTION 2: TIMESHEET POLICY
 =======================================================
 
 2.1 TIMESHEET SUBMISSION
-- Employees must log their daily work hours in the TraitSoftwares portal.
+- Employees must log their daily work hours in the TeconSolutions portal.
 - Timesheets should be submitted every Friday for the week.
 - Late submission may affect performance reviews.
 - A minimum of 8 hours per working day is expected.
@@ -127,7 +127,7 @@ SECTION 7: GRIEVANCE REDRESSAL
 - Employees can raise grievances through the HR portal messaging system.
 - All grievances will be addressed within 7 working days.
 - Grievances can also be raised directly with HR manager.
-- Anonymous complaints can be submitted to hr@traitsoftwares.com.
+- Anonymous complaints can be submitted to hr@TeconSolutions.com.
 
 =======================================================
 SECTION 8: RESIGNATION AND NOTICE PERIOD
@@ -142,8 +142,8 @@ SECTION 8: RESIGNATION AND NOTICE PERIOD
 =======================================================
 CONTACT
 =======================================================
-HR Department: hr@traitsoftwares.com
-IT Support: it@traitsoftwares.com
-Finance: finance@traitsoftwares.com
+HR Department: hr@TeconSolutions.com
+IT Support: it@TeconSolutions.com
+Finance: finance@TeconSolutions.com
 
 This document is effective from January 1, 2025.

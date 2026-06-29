@@ -23,7 +23,7 @@ from app.utils.config import settings
 # Create FastAPI app
 # ============================================================
 app = FastAPI(
-    title="TraitSoftwares Timesheet & Task Management",
+    title="TeconSolutions Timesheet & Task Management",
     description="Employee management system with AI assistant",
     version="1.0.0"
 )
@@ -83,7 +83,7 @@ async def startup_event():
 
     print(f"✅ {settings.COMPANY_NAME} is ready!")
     print(f"🌐 Open: http://localhost:8000")
-    print(f"📧 Admin login: admin@traitsoftwares.com / Admin@123")
+    print(f"📧 Admin login: admin@TeconSolutions.com / Admin@123")
     print("=" * 50)
 
 

@@ -48,19 +48,32 @@ async def reports_page(request: Request):
 
     # Monthly timesheet hours (last 6 months)
     cursor.execute("""
-        SELECT 
-            DATE_FORMAT(work_date, '%b %Y') as month_label,
-            MONTH(work_date) as month_num,
-            YEAR(work_date) as year_num,
-            SUM(hours_worked) as total_hours,
-            COUNT(DISTINCT user_id) as active_employees
+        SELECT
+            EXTRACT(YEAR FROM work_date) AS year_num,
+            EXTRACT(MONTH FROM work_date) AS month_num,
+            SUM(hours_worked) AS total_hours,
+            COUNT(DISTINCT user_id) AS active_employees
         FROM timesheets
         WHERE work_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-          AND status = 'approved'
-        GROUP BY YEAR(work_date), MONTH(work_date)
-        ORDER BY year_num, month_num
+        AND status = 'approved'
+        GROUP BY
+            EXTRACT(YEAR FROM work_date),
+            EXTRACT(MONTH FROM work_date)
+        ORDER BY
+            year_num,
+            month_num
     """)
+
     monthly_hours = cursor.fetchall()
+
+    month_names = {
+        1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
+        5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
+        9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
+    }
+
+    for row in monthly_hours:
+        row["month_label"] = f"{month_names[row['month_num']]} {row['year_num']}"
 
     # Leave type breakdown this year
     cursor.execute("""

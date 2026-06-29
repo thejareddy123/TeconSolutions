@@ -1,7 +1,7 @@
 -- ============================================================
--- TraitSoftwares Database Schema
+-- TeconSolutions Database Schema
 -- Run this SQL to create all tables
--- Usage: mysql -u root -p traitsoftwares_db < schema.sql
+-- Usage: mysql -u root -p TeconSolutions_db < schema.sql
 -- ============================================================
 
 -- Create database if it doesn't exist
@@ -309,7 +309,7 @@ INSERT IGNORE INTO users (
     'EMP001',
     'Admin',
     'User',
-    'admin@traitsoftwares.com',
+    'admin@TeconSolutions.com',
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/lewFOaI1WS5X.Y2Ku',  -- Admin@123
     'admin',
     'Administration',

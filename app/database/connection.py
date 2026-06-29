@@ -16,7 +16,7 @@ load_dotenv()
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", 3306)),
-    "database": os.getenv("DB_NAME", "traitsoftwares_db"),
+    "database": os.getenv("DB_NAME", "TeconSolutions_db"),
     "user": os.getenv("DB_USER", "root"),
     "password": os.getenv("DB_PASSWORD", ""),
 }
@@ -24,7 +24,7 @@ DB_CONFIG = {
 # Create a connection pool so we don't open/close connections too often
 # pool_size=5 means we keep 5 connections ready to use
 connection_pool = pooling.MySQLConnectionPool(
-    pool_name="traitsoftwares_pool",
+    pool_name="TeconSolutions_pool",
     pool_size=5,
     **DB_CONFIG
 )

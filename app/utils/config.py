@@ -17,14 +17,14 @@ class Settings:
     """
     
     # App
-    APP_NAME: str = os.getenv("APP_NAME", "TraitSoftwares")
+    APP_NAME: str = os.getenv("APP_NAME", "TeconSolutions")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-this-secret-key")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     
     # Database
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_PORT: int = int(os.getenv("DB_PORT", 3306))
-    DB_NAME: str = os.getenv("DB_NAME", "traitsoftwares_db")
+    DB_NAME: str = os.getenv("DB_NAME", "TeconSolutions_db")
     DB_USER: str = os.getenv("DB_USER", "root")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     
@@ -51,7 +51,7 @@ class Settings:
     MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", 10))
     
     # Company
-    COMPANY_NAME: str = os.getenv("COMPANY_NAME", "TraitSoftwares")
+    COMPANY_NAME: str = os.getenv("COMPANY_NAME", "TeconSolutions")
     TIMEZONE: str = os.getenv("TIMEZONE", "Asia/Kolkata")
 
 

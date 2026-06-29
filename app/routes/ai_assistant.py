@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from app.utils.session import get_session
 from app.models import ai_model, notification_model
-from app.rag import document_processor, ai_assistant, vector_store_chromadb
+from app.rag import document_processor, ai_assistant, vector_store
 from app.utils.helpers import allowed_document_types, get_file_extension
 from app.utils.config import settings
 
@@ -120,7 +120,7 @@ async def knowledge_base_page(request: Request):
 
     user_id = session["user_id"]
     documents = ai_model.get_all_documents()
-    stats = vector_store_chromadb.get_collection_stats()
+    stats = vector_store.get_collection_stats()
 
     return templates.TemplateResponse("ai/knowledge_base.html", {
         "request": request,
@@ -196,7 +196,7 @@ async def upload_document(
             return JSONResponse({"error": "Document appears to be empty"}, status_code=400)
 
         # Add to ChromaDB
-        chunk_count = vector_store_chromadb.add_document_chunks(doc_id, file.filename, chunks)
+        chunk_count = vector_store.add_document_chunks(doc_id, file.filename, chunks)
 
         # Mark as indexed in database
         ai_model.mark_document_indexed(doc_id, chunk_count)
@@ -226,7 +226,7 @@ async def delete_document(request: Request, doc_id: int):
 
         if doc:
             # Remove from ChromaDB
-            vector_store_chromadb.delete_document_chunks(doc_id)
+            vector_store.delete_document_chunks(doc_id)
 
             # Delete file from disk
             if os.path.exists(doc["file_path"]):
@@ -251,12 +251,12 @@ async def reindex_document(request: Request, doc_id: int):
             return JSONResponse({"error": "Document not found"}, status_code=404)
 
         # Remove old chunks
-        vector_store_chromadb.delete_document_chunks(doc_id)
+        vector_store.delete_document_chunks(doc_id)
 
         # Re-extract and re-index
         text = document_processor.extract_text(doc["file_path"], doc["file_type"])
         chunks = document_processor.chunk_text(text)
-        chunk_count = vector_store_chromadb.add_document_chunks(doc_id, doc["file_name"], chunks)
+        chunk_count = vector_store.add_document_chunks(doc_id, doc["file_name"], chunks)
 
         ai_model.mark_document_indexed(doc_id, chunk_count)
 

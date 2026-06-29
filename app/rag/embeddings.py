@@ -3,7 +3,7 @@
 # Google Gemini Embedding Service
 # ============================================================
 
-import google.generativeai as genai
+import google.generativeai as genai  # type: ignore[import]
 from app.utils.config import settings
 
 # Configure Gemini once

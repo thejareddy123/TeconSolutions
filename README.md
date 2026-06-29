@@ -1,4 +1,4 @@
-# 🚀 TraitSoftwares Timesheet & Task Management System
+# 🚀 TeconSolutions Timesheet & Task Management System
 
 A complete Employee Management System built with **FastAPI, MySQL, Gemini AI, LangChain, and ChromaDB**.
 
@@ -40,7 +40,7 @@ Security:   bcrypt password hashing
 ## 📁 Project Structure
 
 ```
-traitsoftwares/
+TeconSolutions/
 │
 ├── main.py                    # FastAPI app entry point
 ├── requirements.txt           # Python dependencies
@@ -125,7 +125,7 @@ traitsoftwares/
 ### Step 1: Clone or Download the Project
 
 ```bash
-cd traitsoftwares
+cd TeconSolutions
 ```
 
 ### Step 2: Create Virtual Environment
@@ -154,11 +154,11 @@ pip install -r requirements.txt
 mysql -u root -p
 
 # Create database
-CREATE DATABASE traitsoftwares_db;
+CREATE DATABASE TeconSolutions_db;
 exit;
 
 # Run the schema
-mysql -u root -p traitsoftwares_db < app/database/schema.sql
+mysql -u root -p TeconSolutions_db < app/database/schema.sql
 ```
 
 ### Step 5: Configure Environment Variables
@@ -169,7 +169,7 @@ Edit the `.env` file:
 # Database
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=traitsoftwares_db
+DB_NAME=TeconSolutions_db
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 
@@ -197,7 +197,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 http://localhost:8000
 
 Default Admin Login:
-Email:    admin@traitsoftwares.com
+Email:    admin@TeconSolutions.com
 Password: Admin@123
 ```
 
@@ -285,7 +285,7 @@ uvicorn main:app --reload
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
 # Reset database
-mysql -u root -p traitsoftwares_db < app/database/schema.sql
+mysql -u root -p TeconSolutions_db < app/database/schema.sql
 
 # Check if all packages are installed
 pip list | grep -E "fastapi|mysql|chromadb|google"
@@ -337,7 +337,7 @@ A: "We use signed cookies. The user data is base64-encoded and signed with HMAC-
 
 ## 📄 License
 
-This project is for educational purposes. Built by TraitSoftwares.
+This project is for educational purposes. Built by TeconSolutions.
 
 ---
 

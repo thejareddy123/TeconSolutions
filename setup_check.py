@@ -9,7 +9,7 @@ import sys
 import os
 
 print("=" * 60)
-print("🔍 TraitSoftwares Setup Checker")
+print("🔍 TeconSolutions Setup Checker")
 print("=" * 60)
 
 errors = []
@@ -92,7 +92,7 @@ try:
         port=int(os.getenv("DB_PORT", 3306)),
         user=os.getenv("DB_USER", "root"),
         password=os.getenv("DB_PASSWORD", ""),
-        database=os.getenv("DB_NAME", "traitsoftwares_db")
+        database=os.getenv("DB_NAME", "TeconSolutions_db")
     )
     cursor = conn.cursor()
     cursor.execute("SHOW TABLES")
@@ -106,7 +106,7 @@ try:
         if table in tables:
             print(f"  ✅ Table '{table}' exists")
         else:
-            errors.append(f"Table '{table}' missing — run: mysql -u root -p traitsoftwares_db < app/database/schema.sql")
+            errors.append(f"Table '{table}' missing — run: mysql -u root -p TeconSolutions_db < app/database/schema.sql")
             print(f"  ❌ Table '{table}' MISSING")
 
 except Exception as e:
@@ -169,7 +169,7 @@ if not errors and not warnings:
     print("\n🚀 Run the app with:")
     print("   uvicorn main:app --reload")
     print("\n🌐 Open: http://localhost:8000")
-    print("👤 Admin: admin@traitsoftwares.com / Admin@123")
+    print("👤 Admin: admin@TeconSolutions.com / Admin@123")
 elif not errors:
     print("\n✅ No critical errors. Warnings are optional improvements.")
     print("\n🚀 You can still run: uvicorn main:app --reload")
