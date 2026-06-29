@@ -28,6 +28,7 @@ async def dashboard(request: Request):
     user_id = session["user_id"]
     role = session["role"]
     today = datetime.now()
+    now_hour = today.hour
     
     # Get data based on role
     if role == "admin":
@@ -43,6 +44,7 @@ async def dashboard(request: Request):
         context = {
             "request": request,
             "session": session,
+            "now_hour": now_hour,
             "task_stats": task_stats,
             "leave_stats": leave_stats,
             "timesheet_stats": timesheet_stats,
@@ -70,6 +72,7 @@ async def dashboard(request: Request):
         context = {
             "request": request,
             "session": session,
+            "now_hour": now_hour,
             "my_tasks": my_tasks[:5],
             "pending_tasks_count": len(pending_tasks),
             "leave_balance": leave_balance,

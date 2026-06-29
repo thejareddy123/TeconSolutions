@@ -5,7 +5,7 @@
 
 import google.generativeai as genai
 from app.utils.config import settings
-from app.rag.vector_store import search_similar
+from app.rag.vector_store_chromadb import search_similar
 from app.models import user_model, task_model, leave_model, timesheet_model, holiday_model
 from datetime import datetime
 
