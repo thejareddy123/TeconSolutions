@@ -62,7 +62,7 @@ app.include_router(ai_assistant.router)
 async def startup_event():
     """Check database connection and required folders on startup"""
     print("=" * 50)
-    print(f"🚀 Starting {settings.COMPANY_NAME} App...")
+    print(f" Starting {settings.COMPANY_NAME} App...")
     print("=" * 50)
 
     # Test database connection
@@ -81,9 +81,9 @@ async def startup_event():
     for folder in folders:
         os.makedirs(folder, exist_ok=True)
 
-    print(f"✅ {settings.COMPANY_NAME} is ready!")
-    print(f"🌐 Open: http://localhost:8000")
-    print(f"📧 Admin login: admin@TeconSolutions.com / Admin@123")
+    print(f" {settings.COMPANY_NAME} is ready!")
+    print(f" Open: http://localhost:8000")
+    print(f" Admin login: admin@TeconSolutions.com / Admin@123")
     print("=" * 50)
 
 

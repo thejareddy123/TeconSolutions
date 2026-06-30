@@ -70,7 +70,7 @@ def create_user(data: dict) -> int:
     Returns the new user's ID.
     
     data should contain: employee_id, first_name, last_name, email,
-    password (plain text), role, department, designation, etc.
+    passwordH%BCCaqZz0 (plain text), role, department, designation, etc.
     """
     conn = get_db()
     try:
